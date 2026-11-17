@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Screening – fast paracetamolbehandling</title>
+<style>
+  :root {
+    --ink: #20312d;
+    --muted: #5d6d67;
+    --line: #dce5e0;
+    --surface: #ffffff;
+    --bg: #f3f7f4;
+    --brand: #246b55;
+    --brand-dark: #194c3d;
+    --soft: #e8f2ed;
+    --green: #216b49;
+    --green-bg: #eaf5ee;
+    --amber: #855b12;
+    --amber-bg: #fff5df;
+    --red: #91433d;
+    --red-bg: #faecea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .page { max-width: 900px; margin: 0 auto; padding: 28px 18px 56px; }
+  header { margin-bottom: 22px; }
+  .eyebrow {
+    color: var(--brand); font-size: .78rem; font-weight: 750;
+    letter-spacing: .09em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.35rem); line-height: 1.15; margin: 0 0 10px; }
+  .intro { max-width: 720px; color: var(--muted); margin: 0; }
+  .notice {
+    background: var(--soft); border-left: 4px solid var(--brand);
+    border-radius: 8px; padding: 13px 15px; margin: 20px 0 24px;
+    color: #29483d; font-size: .94rem;
+  }
+  form { display: grid; gap: 15px; }
+  fieldset {
+    border: 1px solid var(--line); border-radius: 13px;
+    background: var(--surface); padding: 18px 20px 17px; margin: 0;
+    min-width: 0;
+  }
+  legend { padding: 0 7px; font-weight: 750; font-size: 1.02rem; }
+  .hint { margin: 0 0 12px; color: var(--muted); font-size: .9rem; }
+  .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .option {
+    display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px;
+    border: 1px solid var(--line); border-radius: 9px; cursor: pointer;
+    background: #fff; min-height: 46px;
+  }
+  .option:hover { border-color: #8bb5a2; background: #fbfdfb; }
+  .option:has(input:checked) { border-color: var(--brand); background: var(--soft); }
+  input[type="radio"] { accent-color: var(--brand); margin: 4px 0 0; flex: 0 0 auto; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+  button {
+    border: 0; border-radius: 9px; padding: 12px 18px; font: inherit;
+    font-weight: 700; cursor: pointer;
+  }
+  .primary { background: var(--brand); color: white; }
+  .primary:hover { background: var(--brand-dark); }
+  .secondary { background: #e5ece8; color: var(--ink); }
+  button:focus-visible, input:focus-visible + span { outline: 3px solid #8bb5a2; outline-offset: 3px; }
+  #result { display: none; margin-top: 28px; }
+  #result.show { display: block; }
+  .result-card {
+    background: white; border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden;
+  }
+  .result-head { padding: 20px 22px; border-bottom: 1px solid var(--line); }
+  .status {
+    display: inline-block; border-radius: 99px; padding: 5px 10px;
+    font-size: .8rem; font-weight: 800; margin-bottom: 9px;
+  }
+  .status.green { background: var(--green-bg); color: var(--green); }
+  .status.amber { background: var(--amber-bg); color: var(--amber); }
+  .status.red { background: var(--red-bg); color: var(--red); }
+  .result-head h2 { margin: 0 0 5px; font-size: 1.35rem; }
+  .result-head p { margin: 0; color: var(--muted); }
+  .result-body { padding: 20px 22px; }
+  .result-body h3 { font-size: 1rem; margin: 18px 0 7px; }
+  .result-body h3:first-child { margin-top: 0; }
+  .result-body ul, .result-body ol { margin: 7px 0 0; padding-left: 22px; }
+  .result-body li { margin: 5px 0; }
+  .summary {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px; margin-top: 16px;
+  }
+  .summary div { background: #f6f9f7; border-radius: 8px; padding: 10px 12px; }
+  .summary strong { display: block; font-size: .78rem; color: var(--muted); font-weight: 650; }
+  .summary span { display: block; font-weight: 700; margin-top: 2px; }
+  .caution {
+    margin-top: 17px; background: #f5f7f6; border-radius: 9px;
+    padding: 13px 14px; color: #4d5d56; font-size: .9rem;
+  }
+  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  footer { color: var(--muted); font-size: .82rem; margin-top: 25px; }
+  @media (max-width: 600px) {
+    .page { padding: 22px 13px 40px; }
+    fieldset { padding: 15px 14px; }
+    .options, .summary { grid-template-columns: 1fr; }
+    .result-head, .result-body { padding: 17px; }
+  }
+  @media print {
+    body { background: white; }
+    .page { max-width: none; padding: 0; }
+    form, header .intro, .notice, footer, .result-actions { display: none !important; }
+    #result { display: block !important; }
+    .result-card { border: 1px solid #aaa; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <div class="eyebrow">Sygeplejefagligt screeningsværktøj</div>
+    <h1>Gennemgang af fast paracetamolbehandling</h1>
+    <p class="intro">Screening af borgere over 65 år med henblik på at finde situationer, hvor det kan være relevant at drøfte reduktion eller ophør af fast paracetamolbehandling med den behandlingsansvarlige læge.</p>
+  </header>
+
+  <div class="notice">
+    <strong>Sådan bruges screeningen:</strong> Besvar spørgsmålene ud fra aktuelle oplysninger og borgerens egen oplevelse, så vidt muligt. Resultatet er en støtte til faglig refleksion – ikke en ordination eller en automatisk beslutning om at ændre behandlingen.
+  </div>
+
+  <form id="screeningForm">
+    <fieldset>
+      <legend>1. Hvor mange mg paracetamol får borgeren i døgnet?</legend>
+      <p class="hint">Vælg den svarmulighed, der ligger tættest på borgerens samlede døgndosis. Hvis borgerens dosis ikke fremgår præcist af svarmulighederne, vælges den nærmeste dosis.</p>
+      <div class="options">
+        <label class="option"><input type="radio" name="dose" value="1000" required><span>1000 mg</span></label>
+        <label class="option"><input type="radio" name="dose" value="2000"><span>2000 mg</span></label>
+        <label class="option"><input type="radio" name="dose" value="3000"><span>3000 mg</span></label>
+        <label class="option"><input type="radio" name="dose" value="4000"><span>4000 mg</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Hvor længe har borgeren fået denne dosis paracetamol?</legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="duration" value="6m" required><span>6 måneder</span></label>
+        <label class="option"><input type="radio" name="duration" value="1y"><span>1 år</span></label>
+        <label class="option"><input type="radio" name="duration" value="2y"><span>2 år</span></label>
+        <label class="option"><input type="radio" name="duration" value="3y"><span>+ 3 år</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. Hvor stærke smerter oplever borgeren på en skala fra 0-10?</legend>
+      <p class="hint">Vælg det interval, der passer bedst til borgerens aktuelle smerteoplevelse.</p>
+      <div class="options">
+        <label class="option"><input type="radio" name="pain" value="low" required><span>0-3</span></label>
+        <label class="option"><input type="radio" name="pain" value="midlow"><span>4-5</span></label>
+        <label class="option"><input type="radio" name="pain" value="midhigh"><span>6-7</span></label>
+        <label class="option"><input type="radio" name="pain" value="high"><span>8-10</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4. Følger den behandlende læge op på borgerens medicin minimum én gang årligt?</legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="review" value="yes" required><span>Ja</span></label>
+        <label class="option"><input type="radio" name="review" value="no"><span>Nej</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>5. Oplever borgeren, at paracetamol har en smertelindrende effekt?</legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="effect" value="high" required><span>Ja, i høj grad</span></label>
+        <label class="option"><input type="radio" name="effect" value="some"><span>Ja, i nogen grad</span></label>
+        <label class="option"><input type="radio" name="effect" value="none"><span>Nej, ikke umiddelbart</span></label>
+        <label class="option"><input type="radio" name="effect" value="unknown"><span>Ved ikke</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>6. Er der en aktuel dokumenteret indikation for borgerens paracetamolbehandling?</legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="indication" value="yes" required><span>Ja</span></label>
+        <label class="option"><input type="radio" name="indication" value="no"><span>Nej</span></label>
+        <label class="option"><input type="radio" name="indication" value="unknown"><span>Ved ikke</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>7. Er borgerens paracetamolbehandling tidligere blevet forsøgt reduceret?</legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="trial" value="successful" required><span>Ja, med god effekt</span></label>
+        <label class="option"><input type="radio" name="trial" value="worse"><span>Ja, men smerterne blev forværret</span></label>
+        <label class="option"><input type="radio" name="trial" value="no"><span>Nej</span></label>
+        <label class="option"><input type="radio" name="trial" value="unknown"><span>Ved ikke</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>8. Er borgerens smerter stabile, forværrede eller forbedrede?</legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="trend" value="improved" required><span>Forbedrede</span></label>
+        <label class="option"><input type="radio" name="trend" value="stable"><span>Uændrede</span></label>
+        <label class="option"><input type="radio" name="trend" value="worse"><span>Forværrede</span></label>
+        <label class="option"><input type="radio" name="trend" value="unknown"><span>Ved ikke</span></label>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button class="primary" type="submit">Se faglig tilbagemelding</button>
+      <button class="secondary" type="reset">Nulstil svar</button>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div class="result-card">
+      <div class="result-head">
+        <span id="status" class="status amber"></span>
+        <h2 id="resultTitle"></h2>
+        <p id="resultLead"></p>
+      </div>
+      <div class="result-body">
+        <h3>Samlet tilbagemelding</h3>
+        <p id="assessment"></p>
+        <h3>Anbefalede næste skridt</h3>
+        <ol id="nextSteps"></ol>
+        <div class="summary" id="summary"></div>
+        <div class="caution">
+          <strong>Vigtigt:</strong> Screeningen kan pege på et muligt behov for revurdering, men kan ikke afgøre, om paracetamol bør reduceres eller seponeres. Ændringer aftales med den behandlingsansvarlige læge. Tag højde for borgerens funktion, mål med behandlingen, smertehistorik og øvrige kliniske forhold. Ved forværring af smerter eller nye symptomer skal dette vurderes sundhedsfagligt.
+        </div>
+        <div class="result-actions">
+          <button class="primary" type="button" onclick="window.print()">Udskriv tilbagemelding</button>
+          <button class="secondary" type="button" id="editButton">Ret svar</button>
+          <button class="secondary" type="button" id="newButton">Start ny screening</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Værktøjet er tænkt som støtte til systematisk screening og dialog om behandlingsbehov. Det erstatter ikke lokale instrukser, klinisk vurdering eller lægelig beslutning.
+  </footer>
+</main>
+
+<script>
+(function () {
+  const form = document.getElementById('screeningForm');
+  const result = document.getElementById('result');
+
+  const labels = {
+    dose: {1000:'1000 mg', 2000:'2000 mg', 3000:'3000 mg', 4000:'4000 mg'},
+    duration: { '6m':'6 måneder', '1y':'1 år', '2y':'2 år', '3y':'+ 3 år' },
+    pain: {low:'0-3', midlow:'4-5', midhigh:'6-7', high:'8-10'},
+    review: {yes:'Ja', no:'Nej'},
+    effect: {high:'Ja, i høj grad', some:'Ja, i nogen grad', none:'Nej, ikke umiddelbart', unknown:'Ved ikke'},
+    indication: {yes:'Ja', no:'Nej', unknown:'Ved ikke'},
+    trial: {successful:'Ja, med god effekt', worse:'Ja, men smerterne blev forværret', no:'Nej', unknown:'Ved ikke'},
+    trend: {improved:'Forbedrede', stable:'Uændrede', worse:'Forværrede', unknown:'Ved ikke'}
+  };
+
+  function get(name) {
+    const selected = form.querySelector('input[name="' + name + '"]:checked');
+    return selected ? selected.value : null;
+  }
+
+  function addListItem(list, text) {
+    const li = document.createElement('li');
+    li.textContent = text;
+    list.appendChild(li);
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+
+    const a = {
+      dose:get('dose'), duration:get('duration'), pain:get('pain'),
+      review:get('review'), effect:get('effect'), indication:get('indication'),
+      trial:get('trial'), trend:get('trend')
+    };
+
+    // Vurderingen er bevidst regelbaseret og forsigtig:
+    // dosis og varighed udløser ikke i sig selv en konklusion om reduktion.
+    const strongReasons = [];
+    const clarifyReasons = [];
+    const cautionReasons = [];
+
+    if (a.pain === 'low') strongReasons.push('Borgeren angiver aktuelt få smerter (0-3).');
+    if (a.effect === 'none') strongReasons.push('Borgeren oplever ikke umiddelbart en smertelindrende effekt.');
+    if (a.indication === 'no') strongReasons.push('Der er angivet, at der ikke foreligger en aktuel dokumenteret indikation.');
+    if (a.trial === 'successful') strongReasons.push('Et tidligere reduktionsforsøg er gennemført med god effekt.');
+    if (a.trend === 'improved') strongReasons.push('Borgerens smerter er blevet bedre.');
+
+    if (a.duration === '2y' || a.duration === '3y') clarifyReasons.push('Behandlingen har stået på i længere tid og bør vurderes i forhold til det aktuelle behov.');
+    if (a.review === 'no') clarifyReasons.push('Der er ikke oplyst om årlig lægelig opfølgning.');
+    if (a.effect === 'unknown') clarifyReasons.push('Det er uklart, om borgeren oplever en smertelindrende effekt.');
+    if (a.indication === 'unknown') clarifyReasons.push('Den aktuelle indikation er ikke afklaret eller dokumenteret.');
+    if (a.trial === 'unknown') clarifyReasons.push('Resultatet af eventuelle tidligere reduktionsforsøg er ukendt.');
+    if (a.trend === 'unknown') clarifyReasons.push('Udviklingen i borgerens smerter er ukendt.');
+    if (a.pain === 'midlow') clarifyReasons.push('Borgeren angiver smerter i intervallet 4-5; betydningen for funktion og hverdag bør afklares.');
+    if (a.duration === '6m' || a.duration === '1y') {
+      // Kortere varighed udelukker ikke gennemgang, men giver ikke alene et signal.
+    }
+
+    if (a.pain === 'midhigh' || a.pain === 'high') cautionReasons.push('Borgeren angiver fortsat moderate til stærke smerter.');
+    if (a.trend === 'worse') cautionReasons.push('Borgerens smerter er blevet værre.');
+    if (a.trial === 'worse') cautionReasons.push('Et tidligere reduktionsforsøg medførte forværring af smerterne.');
+    if (a.effect === 'high') cautionReasons.push('Borgeren oplever i høj grad en smertelindrende effekt af behandlingen.');
+
+    let type, title, lead, assessment, steps = [];
+
+    // Forværring, betydelige smerter eller tidligere forværring vægtes højest.
+    if (a.trend === 'worse' || a.trial === 'worse' || a.pain === 'high' || a.pain === 'midhigh') {
+      type = 'red';
+      title = 'Ingen oplagt reduktion på nuværende grundlag';
+      lead = 'Der er oplysninger, som taler for, at smertebehovet skal afklares, før en eventuel reduktion overvejes.';
+      assessment = 'Screeningen viser ikke et tydeligt grundlag for at gå direkte videre med reduktion. Det skyldes især de aktuelle eller forværrede smerter og/eller et tidligere reduktionsforsøg, hvor smerterne blev værre. Det udelukker ikke en senere revurdering, men borgerens smerter, funktion og behandlingsmål bør først drøftes med lægen.';
+      steps = [
+        'Tal med borgeren om smerterne, hvad de betyder for daglige aktiviteter, søvn og funktion, og om der er sket ændringer.',
+        'Gennemgå den aktuelle indikation og den dokumenterede effekt af behandlingen.',
+        'Del oplysningerne med den behandlingsansvarlige læge, og aftal om der er behov for en samlet smerte- og medicingennemgang.',
+        'Hvis der senere aftales en ændring, skal der være en plan for observation og opfølgning på smerter og funktion.'
+      ];
+    } else if (strongReasons.length >= 2 || (strongReasons.length >= 1 && a.pain === 'low' && a.trend !== 'worse' && a.trial !== 'worse')) {
+      type = 'green';
+      title = 'Muligt potentiale for reduktion';
+      lead = 'Flere oplysninger giver anledning til at undersøge, om den faste behandling fortsat er nødvendig i nuværende omfang.';
+      assessment = 'Borgerens svar peger på mulige tegn på, at behandlingsbehovet kan have ændret sig, eller at den oplevede effekt/indikation bør revurderes. Det er ikke i sig selv dokumentation for, at behandlingen kan undværes. En eventuel reduktion eller seponering skal aftales med den behandlingsansvarlige læge.';
+      steps = [
+        'Gennemgå hvorfor paracetamol oprindeligt blev ordineret, og om indikationen fortsat er til stede.',
+        'Afklar med borgeren, hvilken effekt behandlingen opleves at have, og hvordan smerter og funktion er aktuelt.',
+        'Fremlæg screeningen for den behandlingsansvarlige læge og drøft, om et individuelt, aftalt reduktionsforsøg er relevant.',
+        'Hvis lægen beslutter at afprøve reduktion, aftal på forhånd hvordan smerter, funktion og eventuelt behov for at genoptage eller justere behandlingen skal følges op.'
+      ];
+    } else {
+      type = 'amber';
+      title = 'Behov for nærmere afklaring';
+      lead = 'Der er ikke tilstrækkelige oplysninger til at pege tydeligt på reduktion, men behandlingsbehovet kan med fordel undersøges nærmere.';
+      assessment = 'Svarene giver anledning til en struktureret gennemgang af indikation, effekt og borgerens aktuelle smerter. Lang behandlingsvarighed, manglende opfølgning eller ubesvarede forhold kan gøre en medicingennemgang relevant, men er ikke i sig selv grundlag for at reducere behandlingen.';
+      steps = [
+        'Afklar den aktuelle indikation og find den seneste dokumentation for behandlingsmålet.',
+        'Spørg borgeren, hvilken forskel paracetamol gør, og hvordan smerterne påvirker funktion og hverdag.',
+        'Undersøg om lægen har taget konkret stilling til paracetamolbehandlingen ved seneste medicingennemgang.',
+        'Drøft med den behandlingsansvarlige læge, om der er grundlag for et planlagt og monitoreret reduktionsforsøg.'
+      ];
+    }
+
+    // Tilføj relevante forhold, så tilbagemeldingen afspejler alle svar.
+    if (a.review === 'no') {
+      steps.push('Da der ikke er oplyst om årlig lægelig opfølgning, bør sygeplejersken tage initiativ til at få aftalt en medicingennemgang.');
+    }
+    if (a.indication === 'unknown' || a.indication === 'no') {
+      steps.push('Sørg for, at indikationen bliver afklaret og dokumenteret i forbindelse med lægens gennemgang.');
+    }
+    if (a.dose === '3000' || a.dose === '4000') {
+      steps.push('Medtag den samlede døgndosis i dialogen med lægen, så dosis og behandlingsplan indgår i den samlede gennemgang.');
+    }
+    if (a.duration === '2y' || a.duration === '3y') {
+      steps.push('Vær særligt opmærksom på, om behandlingsmålet og behovet er blevet revurderet undervejs i det langvarige forløb.');
+    }
+
+    document.getElementById('status').className = 'status ' + type;
+    document.getElementById('status').textContent =
+      type === 'green' ? 'Muligt reduktionspotentiale' :
+      type === 'amber' ? 'Nærmere afklaring' : 'Afvent reduktion og afklar smertebehov';
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultLead').textContent = lead;
+    document.getElementById('assessment').textContent = assessment;
+
+    const next = document.getElementById('nextSteps');
+    next.innerHTML = '';
+    steps.forEach(s => addListItem(next, s));
+
+    const summary = document.getElementById('summary');
+    summary.innerHTML = '';
+    const fields = [
+      ['Døgndosis', labels.dose[a.dose]],
+      ['Behandlingsvarighed', labels.duration[a.duration]],
+      ['Aktuelle smerter', labels.pain[a.pain]],
+      ['Årlig lægeopfølgning', labels.review[a.review]],
+      ['Oplevet effekt', labels.effect[a.effect]],
+      ['Dokumenteret indikation', labels.indication[a.indication]],
+      ['Tidligere reduktionsforsøg', labels.trial[a.trial]],
+      ['Udvikling i smerter', labels.trend[a.trend]]
+    ];
+    fields.forEach(([k,v]) => {
+      const div = document.createElement('div');
+      const strong = document.createElement('strong');
+      const span = document.createElement('span');
+      strong.textContent = k;
+      span.textContent = v;
+      div.append(strong, span);
+      summary.appendChild(div);
+    });
+
+    result.classList.add('show');
+    result.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  form.addEventListener('reset', function () {
+    result.classList.remove('show');
+  });
+  document.getElementById('editButton').addEventListener('click', function () {
+    result.classList.remove('show');
+    form.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+  document.getElementById('newButton').addEventListener('click', function () {
+    form.reset();
+    result.classList.remove('show');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+})();
+</script>
+</body>
+</html>
